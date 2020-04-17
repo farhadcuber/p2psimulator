@@ -1,10 +1,9 @@
 import random
 import math
 import logging
-from Queue import Queue
+from queue import Queue
 
 import progressbar as pb
-from .Link import Link
 
 class Simulator:
 	def __init__(self, config, log_file, log_level=logging.INFO):
