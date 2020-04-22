@@ -4,6 +4,7 @@ import logging
 from queue import Queue
 
 import progressbar as pb
+from .LatencyModel import KingLatencyModel
 
 class Simulator:
 	def __init__(self, config, log_file, log_level=logging.INFO):
@@ -17,6 +18,8 @@ class Simulator:
 		self.msg_queue = Queue()
 
 		self._init_logger(log_file, log_level)
+
+		self.latency_model = KingLatencyModel()
 	
 	def _init_logger(self, log_file, log_level):
 		self.logger = logging.getLogger('p2psim')
@@ -51,8 +54,10 @@ class Simulator:
 				msg = self.msg_queue.get()
 				if msg.receiver == None:
 					for node in self.nodes:
+						msg.time = t + self.latency_model.get_latency()
 						node.recv(msg)
 				else:
+					msg.time = t + self.latency_model.get_latency()
 					self.nodes[msg.receiver].recv(msg)
 
 			for node in self.nodes:

@@ -29,7 +29,7 @@ class Node:
 			new_msg = self.msgs[0]
 			self.logger.debug(f'Node {self.id}: processing {new_msg.type}')
 			bw -= new_msg.size
-			self.process(new_msg)
+			self.process(new_msg, t)
 			self.msgs.pop(0)
 
 	def send(self, msg):
