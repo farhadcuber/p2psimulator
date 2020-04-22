@@ -1,4 +1,5 @@
 import copy
+import bisect
 import logging
 
 from .Message import Message
@@ -12,7 +13,7 @@ class Node:
 		self.logger = logging.getLogger('p2psim')
 	
 	def recv(self, msg):
-		self.msgs.append(msg)
+		bisect.insort(self.msgs, msg)
 
 	def __eq__(self, other):
 		return self.id == other.id
