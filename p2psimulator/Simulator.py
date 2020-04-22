@@ -55,6 +55,8 @@ class Simulator:
 				msg = self.msg_queue.get()
 				if msg.receiver == None:
 					for node in self.nodes:
+						if msg.sender == node.id:
+							continue
 						new_msg = copy.deepcopy(msg)
 						new_msg.time = t + self.latency_model.get_latency()
 						node.recv(new_msg)
