@@ -25,7 +25,7 @@ class Node:
 
 	def proceed(self, t):
 		bw = self.bandwidth
-		while len(self.msgs) and self.msgs[0].time > t and bw > self.msgs[0].size:
+		while len(self.msgs) and self.msgs[0].time < t and bw > self.msgs[0].size:
 			new_msg = self.msgs[0]
 			self.logger.debug(f'Node {self.id}: processing {new_msg.type}')
 			bw -= new_msg.size
@@ -33,6 +33,7 @@ class Node:
 			self.msgs.pop(0)
 
 	def send(self, msg):
+		self.logger.debug(f'Node {self.id}: sending {msg.type}')
 		self.msg_queue.put(msg)
 
 	def process(self, msg, time):
