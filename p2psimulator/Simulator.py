@@ -1,6 +1,7 @@
 import random
 import math
 import logging
+import copy
 from queue import Queue
 
 import progressbar as pb
@@ -54,8 +55,9 @@ class Simulator:
 				msg = self.msg_queue.get()
 				if msg.receiver == None:
 					for node in self.nodes:
-						msg.time = t + self.latency_model.get_latency()
-						node.recv(msg)
+						new_msg = copy.deepcopy(msg)
+						new_msg.time = t + self.latency_model.get_latency()
+						node.recv(new_msg)
 				else:
 					msg.time = t + self.latency_model.get_latency()
 					self.nodes[msg.receiver].recv(msg)
