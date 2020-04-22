@@ -18,9 +18,11 @@ class Node:
 		return self.id == other.id
 
 	def setTimeout(self, time, callback):
-		msg = Message(self.id, self.id, "Callback", {
-			'time': time,
-			'callback': callback}, 0)
+		''' set a timer to call callback
+		time should be the time that callback should run
+		'''
+		msg = Message(self.id, self.id, "CALLBACK", {
+			'callback': callback}, 0, time)
 		self.send(msg)
 
 	def proceed(self, t):
@@ -28,8 +30,12 @@ class Node:
 		while len(self.msgs) and self.msgs[0].time < t and bw > self.msgs[0].size:
 			new_msg = self.msgs[0]
 			self.logger.debug(f'Node {self.id}: processing {new_msg.type}')
-			bw -= new_msg.size
-			self.process(new_msg, t)
+
+			if new_msg.type == "CALLBACK":
+				new_msg.data['callback']()
+			else:
+				bw -= new_msg.size
+				self.process(new_msg, t)
 			self.msgs.pop(0)
 
 	def send(self, msg):

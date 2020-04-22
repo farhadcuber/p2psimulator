@@ -59,7 +59,8 @@ class Simulator:
 						new_msg.time = t + self.latency_model.get_latency()
 						node.recv(new_msg)
 				else:
-					msg.time = t + self.latency_model.get_latency()
+					if msg.type != "CALLBACK":
+						msg.time = t + self.latency_model.get_latency()
 					self.nodes[msg.receiver].recv(msg)
 
 			for node in self.nodes:
