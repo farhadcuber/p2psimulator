@@ -29,7 +29,7 @@ class ReqGenerator(Node):
         self.send(req)
         
         ## wait for next time
-        t = time + numpy.random.exponential(self.mean_wait_time, 1)
+        t = time + numpy.floor(numpy.random.exponential(self.mean_wait_time, 1)[0])
         self.setTimeout(t, self.req_send, args={'time': t})
         
         ## Increase client_id to have unique messages
