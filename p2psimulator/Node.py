@@ -17,12 +17,15 @@ class Node:
 	def __eq__(self, other):
 		return self.id == other.id
 
-	def setTimeout(self, time, callback):
+	def setTimeout(self, time, callback, args={}):
 		''' set a timer to call callback
 		time should be the time that callback should run
+		also args should be in dict with keywords
+		for example for f(time) it should be like {'time':3}
 		'''
 		msg = Message(self.id, self.id, "CALLBACK", {
-			'callback': callback}, 0, time)
+			'callback': callback,
+			'args': args}, 0, time)
 		self.send(msg)
 
 	def proceed(self, t):
@@ -32,7 +35,7 @@ class Node:
 			self.logger.debug(f'Node {self.id}: processing {new_msg.type}')
 
 			if new_msg.type == "CALLBACK":
-				new_msg.data['callback']()
+				new_msg.data['callback'](**new_msg.data['args'])
 			else:
 				bw -= new_msg.size
 				self.process(new_msg, t)
