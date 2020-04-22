@@ -1,5 +1,6 @@
 import os
 import pytest
+import logging
 
 from p2psimulator import Node, Simulator, Message
 
@@ -11,10 +12,10 @@ class Sender(Node):
 class Receiver(Node):
     def process(self, msg, t):
         if msg.type == "Hello":
-            print(f"received: {msg.data['content']}")
+            self.logger.info("Received successfully")
 
 @pytest.fixture
-def init_simulator():
+def sim():
     config = {
         "time_step": 1,
         "start_time": 0,
@@ -22,13 +23,16 @@ def init_simulator():
         "bandwidth": 1
     }
 
-    sim = Simulator(config, "hellowolrd.log")
+    sim = Simulator(config, "helloworld.log", log_level=logging.DEBUG)
     sim.add_nodes(Sender, 1)
     sim.add_nodes(Receiver, 1)
     sim.start()
     yield sim
     os.remove("helloworld.log")
 
-def test_helloworld(init_simulator):
-    print("hello")
+def test_helloworld(sim):
+    with open('helloworld.log', 'r') as f:
+        log = f.read()
+    
+    assert "Received successfully" in log
 
