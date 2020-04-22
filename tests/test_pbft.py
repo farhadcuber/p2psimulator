@@ -8,7 +8,7 @@ from p2psimulator import Simulator
 LOG_FILE = 'pbft.log'
 
 @pytest.fixture
-def sim():
+def sim(N):
     config = {
         "time_step": 1,
         "start_time": 0,
@@ -19,15 +19,16 @@ def sim():
     sim = Simulator(config, LOG_FILE, log_level=logging.DEBUG)
 
     # Replicas should be added first
-    sim.add_nodes(Replica, 4, 4)
-    # N = 4, mean_req_time = 20ms
-    sim.add_nodes(ReqGenerator, 1, 4, 20)
+    sim.add_nodes(Replica, N, N)
+    # N = number of replicas, mean_req_time = 20ms
+    sim.add_nodes(ReqGenerator, 1, N, 2000)
 
     sim.start()
     yield sim
     os.remove(LOG_FILE)
 
-def test_4_replica(sim):
+@pytest.mark.parametrize('N', [4, 10])
+def test_N_replica(sim):
     with open(LOG_FILE, 'r') as f:
         log = f.read()
 
