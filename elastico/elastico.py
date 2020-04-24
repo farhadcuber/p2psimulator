@@ -1,4 +1,8 @@
 from enum import Enum
+from copy import deepcopy
+from hashlib import sha256
+
+import numpy
 from p2psimulator import Node, Message
 
 # Elastico states
@@ -16,14 +20,28 @@ FINAL_SHARD_LEADER = 6
 # 3. When leader received 2/3 of PREPARE msgs, it broadcasts SHARD_CONSENSUS_COMMIT
 # 4. Members receiving COMMIT, consider block as committed.
 
+# Message formats
+# type - data format - size
+# POW - (identity) - 32 bytes
+
 class ElasticoNode(Node):
-    def __init__(self, node_id, bandwidth, msg_queue):
+    def __init__(self, node_id, bandwidth, msg_queue, config):
         super().__init__(node_id, bandwidth, msg_queue)
         self.state = ElasticoNode.NONE
         self.dir_nodes = []
+        self.shards = dict()
+
+        self.pow_time = config['pow_time'] # mean time to wait for pow
+        self.c = config['c'] # num of shard members
+        self.s = config['s'] # 2^s is number of shards 
     
     def start(self):
-        pass
+        # generate a random number to wait for pow
+        # wait time for pow has exponential distribution with mean 100ms
+        pow_time = numpy.floor(numpy.random.exponential(self.pow_time, 1)[0])
+
+        # set callback
+        self.setTimeout(pow_time, self.pow_done, args={})
 
     def process(self, msg, time):
         # pow and shard formation phase
@@ -53,12 +71,17 @@ class ElasticoNode(Node):
         elif msg.type == "FINAL_CONSENSUS_COMMIT" and self.state == FINAL_SHARD_MEMBER:
             self.broadcast_final_block(msg, time)
           
-        
     def add_to_dir_nodes(self, msg, time):
-        pass
+        if len(self.dir_nodes) < self.c:
+            self.logger.debug(f'Node {self.id} added {msg.sender} to it\'s dir_nodes')
+            self.dir_nodes.append(msg.sender)
+            self.form_shards(msg, time)
 
     def form_shards(self, msg, time):
-        pass
+        shard_id = self.get_shard_id(msg.data[0])
+        if shard_id not in self.shards:
+            self.shards[shard_id] = []
+        self.shards[shard_id].append(msg.sender)
 
     def identify_own_shard(self, msg, time):
         pass
@@ -78,3 +101,28 @@ class ElasticoNode(Node):
     def broadcast_final_block(self, msg, time):
         pass
 
+    # Functions that not called by process
+    def pow_done(self):
+        self.logger.debug(f'Node {self.id} POW calculated.')
+        msg = Message(self.id, None, "POW", (sha256(self.id)), 32)
+        if len(self.dir_nodes) < self.c:
+            self.logger.debug(f'Node {self.id} running as directory.')
+            self.state = RUN_AS_DIRECTORY
+            self.send(msg)
+        else:
+            self.state = FORMED_IDENTITY
+            for node_id in self.dir_nodes:
+                new_msg = deepcopy(msg)
+                new_msg.receiver = node_id
+                self.send(new_msg)
+    
+    def get_shard_id(self, x):
+        ''' x is a sha256 object
+            returns s most significant bits of x
+        '''
+        d = x.digest()
+        if x <= 8:
+            return d[0] >> (8 - self.s)
+        else:
+            self.logger.error('Not implented.')
+            raise NotImplementedError
