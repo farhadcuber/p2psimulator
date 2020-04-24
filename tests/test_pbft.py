@@ -27,7 +27,7 @@ def sim(N):
     yield sim
     os.remove(LOG_FILE)
 
-@pytest.mark.parametrize('N', [4, 10])
+@pytest.mark.parametrize('N', [4, 10, 100])
 def test_N_replica(sim):
     with open(LOG_FILE, 'r') as f:
         log = f.read()
