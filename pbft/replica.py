@@ -33,6 +33,7 @@ class Replica(Node):
                     , msg.data)
             new_msg = Message(self.id, None, "PRE_PREPARE", data, 30)
             self.send(new_msg)
+            self.logger.debug(f"msg {self.seq_num} is started.")
             
             ## Append to log
             self.log.append(msg.data)
