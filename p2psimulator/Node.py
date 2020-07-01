@@ -31,7 +31,11 @@ class Node:
 
 	def proceed(self, t):
 		bw = self.bandwidth
-		while len(self.msgs) and self.msgs[0].time < t and bw > self.msgs[0].size:
+		# while len(self.msgs) and self.msgs[0].time < t and bw > self.msgs[0].size:
+		
+		# For simulating highloads we assume just one msg is processed at each
+		# time step, but real condition is the line up commented.
+		if len(self.msgs) and self.msgs[0].time < t:
 			new_msg = self.msgs[0]
 			self.logger.debug(f'Node {self.id}: processing {new_msg.type}')
 
