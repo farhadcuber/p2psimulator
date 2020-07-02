@@ -44,7 +44,7 @@ class Simulator:
 		for node in self.nodes:
 			node.start()
 
-		widgets = ['Processed: ', pb.Counter()*self.time_step, ' ms (', pb.Timer(), ')']
+		widgets = [f'Processed: {self.time_step}*', pb.Counter(), ' ms (', pb.Timer(), ')']
 		pbar = pb.ProgressBar(widgets=widgets)
 
 		for t in pbar((t for t in range(self.start_time, self.stop_time, \
