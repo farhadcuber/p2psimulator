@@ -26,7 +26,13 @@ def calc_avg_time(N, d, overall):
         elif _id > 0:
             ds[_id] = ds[_id - 1]
     
-    plt.plot(ids, ds)
+    W = 4*int(N)
+    filtered = np.convolve(ds, np.ones(W)*(1/W), 'valid')
+    
+    plt.plot(filtered)
+    plt.title(f"Average PBFT consensus time for N = {N} and {int(1000/int(d))}tx/s")
+    plt.ylabel("Average consensus time (ms)")
+    plt.xlabel("Transaction id")
     plt.show()
 
 if __name__ == '__main__':
