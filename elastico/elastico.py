@@ -1,6 +1,7 @@
 from enum import Enum
 from copy import deepcopy
 from hashlib import sha256
+from math import log2
 
 import numpy
 from p2psimulator import Node, Message
@@ -23,6 +24,7 @@ FINAL_SHARD_LEADER = 6
 # Message formats
 # type - data format - size
 # POW - (identity) - 32 bytes
+# SHARD_MEMBERS - (shard_id, list of shard members id) - log2(s) + c*SIZE(id)
 
 class ElasticoNode(Node):
     def __init__(self, node_id, bandwidth, msg_queue, config):
@@ -30,10 +32,14 @@ class ElasticoNode(Node):
         self.state = ElasticoNode.NONE
         self.dir_nodes = []
         self.shards = dict()
+        self.own_shard = set()
 
         self.pow_time = config['pow_time'] # mean time to wait for pow
         self.c = config['c'] # num of shard members
-        self.s = config['s'] # 2^s is number of shards 
+        self.s = config['s'] # 2^s is number of shards
+
+        # Message sizes
+        self._SHARD_MEMBERS_SIZE = int(log2(self.s)) + self.c * 32
     
     def start(self):
         # generate a random number to wait for pow
@@ -81,10 +87,14 @@ class ElasticoNode(Node):
         shard_id = self.get_shard_id(msg.data[0])
         if shard_id not in self.shards:
             self.shards[shard_id] = []
-        self.shards[shard_id].append(msg.sender)
+        elif not self._is_shards_full():
+            self.shards[shard_id].append(msg.sender)
+        else:
+            self._broadcast_identities()
 
     def identify_own_shard(self, msg, time):
-        pass
+        if msg.sender in self.dir_nodes:
+            self.own_shard = self.own_shard.union(set(msg.data[1]))
 
     def prepare_consensus(self, msg, time):
         pass
@@ -100,7 +110,28 @@ class ElasticoNode(Node):
 
     def broadcast_final_block(self, msg, time):
         pass
-
+    
+    def _is_shards_full(self):
+        is_full = True
+        if len(self.shards) == self.s:
+            for shard_id, shard_members in self.shards.items():
+                if len(shard_members) != self.c:
+                    is_full = False
+                    break
+        else:
+            is_full = False
+        
+        return is_full
+    
+    def _broadcast_identities(self):
+        for shard_id, shard_members in self.shards.items():
+            msg = Message(self.id, None, "SHARD_MEMBERS", (shard_id, \
+                shard_members), self._SHARD_MEMBERS_SIZE)
+            for member in shard_members:
+                new_msg = deepcopy(msg)
+                new_msg.receiver = member
+                self.send(new_msg)
+            
     # Functions that not called by process
     def pow_done(self):
         self.logger.debug(f'Node {self.id} POW calculated.')
