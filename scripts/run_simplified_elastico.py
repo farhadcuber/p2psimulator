@@ -7,7 +7,7 @@ import sys
 from elastico import SimpleElasticoNode
 from p2psimulator import Simulator
 
-def sim(s, c, t):
+def sim_elastico(s, c, t):
     LOG_FILE = str(uuid.uuid4())
     if os.path.isfile(LOG_FILE):
         os.remove(LOG_FILE)
@@ -22,14 +22,16 @@ def sim(s, c, t):
     sim = Simulator(config, LOG_FILE, log_level=logging.DEBUG)
 
     # add nodes
-    N = c * 2 ** s
-    sim.add_nodes(SimpleElasticoNode, N , {"c": c, "s": 2**s})
+    N = c * s
+    sim.add_nodes(SimpleElasticoNode, N , {"c": c, "s": s})
 
     sim.start()
 
     with open(LOG_FILE, 'r') as f:
         log = f.read()
     
+    os.remove(LOG_FILE)
+
     lines = log.split('\n')
     t = 0
     cnt = 0
@@ -39,14 +41,14 @@ def sim(s, c, t):
         elif line.startswith("[p2psim][INFO] - Received enough microblocks"):
             cnt += 1
             if cnt > 2 * c / 3:
-                print(f"Consensus finished at t = {t}.")
-                break
-    
-    os.remove(LOG_FILE)
+                return t  
 
+    return None
+    
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print('Wrong input. S, C, T')
         exit(-1)
     
-    sim(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
+    t = sim_elastico(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
+    print(f"Consensus finished at t = {t}.")
