@@ -12,7 +12,7 @@ def find_max_msg_id(msgs):
     
     return max_id
 
-def calc_avg_time(N, d, overall):
+def plot_pdf(N, d, overall):
     with open(f"result_pbft_c{N}_{d}ms_{overall}s.json", 'r') as f:
         msgs = json.load(f)
     
@@ -26,17 +26,10 @@ def calc_avg_time(N, d, overall):
         elif _id > 0:
             ds[_id] = ds[_id - 1]
     
-    W = 3*int(N)
-    filtered = np.convolve(ds, np.ones(W)*(1/W), 'valid')
-    
-    # plt.plot(filtered)
-    plt.plot(ds[467:])
-    print(np.mean(ds[467:]))
-    # plt.axhline(y = np.mean(ds), ls=':', color='g')
-    plt.title(f"PBFT consensus time for N = {N} and {int(1000/int(d))} tx/s")
-    plt.ylabel("Consensus time (ms)")
-    plt.xlabel("Transaction id")
+    plt.hist(ds, bins=100)
+    plt.title(f"PBFT consensus time Distribution for N = {N} and {int(1000/int(d))}tx/s")
+    plt.xlabel("Consensus time (ms)")
     plt.show()
 
 if __name__ == '__main__':
-    calc_avg_time(sys.argv[1], sys.argv[2], sys.argv[3])
+    plot_pdf(sys.argv[1], sys.argv[2], sys.argv[3])
